@@ -560,6 +560,7 @@ input {
 .edit-button:hover {
   background: #eff6ff;
 }
+<<<<<<< HEAD
 
 /* =========================
    TABLETS
@@ -655,4 +656,64 @@ input {
   .tablet-table-header {
     display: none;
   }
+=======
+.preview-card {
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  margin-top: 12px;
+  background: #f9fafb;
+}
+
+.preview-card strong {
+  display: block;
+  color: #2563eb;
+  margin-bottom: 8px;
+}
+
+.preview-card p {
+  margin: 4px 0;
+}
+
+.input-field {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  margin-bottom: 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+textarea.input-field {
+  resize: vertical;
+}
+.preview-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px;
+  margin-top: 12px;
+  background: #f8fafc;
+}
+
+.contact-card {
+  margin-top: 20px;
+  padding: 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.input-field {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+}
+
+textarea.input-field {
+  resize: vertical;
+>>>>>>> 5b495f2 (updates)
 }

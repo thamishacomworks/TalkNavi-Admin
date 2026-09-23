@@ -500,26 +500,16 @@ function Languages() {
         editingLanguage.id
       );
 
-      await updateDoc(
-        doc(
-          db,
-          "languages",
-          editingLanguage.id
-        ),
-        {
-          name: editName.trim(),
-
-          nativeName:
-            editNativeName.trim(),
-
-          code: cleanCode,
-
-          speechCode:
-            editSpeechCode.trim(),
-
-          flagUrl: flagUrl,
-        }
-      );
+     await updateDoc(
+  doc(db, "languages", cleanCode),
+  {
+    name: editName.trim(),
+    nativeName: editNativeName.trim(),
+    code: cleanCode,
+    speechCode: editSpeechCode.trim(),
+    flagUrl: flagUrl,
+  }
+);
 
 
       alert(
