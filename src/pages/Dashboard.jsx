@@ -3,55 +3,56 @@ import { useEffect, useState } from "react";
 import {
   collection,
   getDocs,
-<<<<<<< HEAD
-  onSnapshot,
-=======
   doc,
   getDoc,
->>>>>>> 5b495f2 (updates)
 } from "firebase/firestore";
 
 import { db } from "../firebase";
 
+
 function Dashboard() {
+
   const [languageCount, setLanguageCount] = useState(0);
   const [loadingLanguages, setLoadingLanguages] = useState(true);
-<<<<<<< HEAD
-
-  const [tabletStats, setTabletStats] = useState({
-    total: 0,
-    online: 0,
-    offline: 0,
-  });
-  const [loadingTablets, setLoadingTablets] = useState(true);
-=======
   const [latestVersion, setLatestVersion] = useState("No version");
   const [loadingVersion, setLoadingVersion] = useState(true);
 
   // =========================================================
   // LOAD LANGUAGES
   // =========================================================
->>>>>>> 5b495f2 (updates)
 
   const loadLanguageCount = async () => {
     try {
+
       setLoadingLanguages(true);
 
-      const snapshot = await getDocs(collection(db, "languages"));
+      const snapshot = await getDocs(
+        collection(db, "languages")
+      );
+
       setLanguageCount(snapshot.size);
+
+      console.log(
+        "Total languages:",
+        snapshot.size
+      );
+
     } catch (error) {
-      console.error("Failed to load language count:", error);
+
+      console.error(
+        "Failed to load language count:",
+        error
+      );
+
       setLanguageCount(0);
+
     } finally {
+
       setLoadingLanguages(false);
+
     }
   };
 
-<<<<<<< HEAD
-  useEffect(() => {
-    loadLanguageCount();
-  }, []);
-=======
 // =========================================================
 // LOAD APP VERSION
 // =========================================================
@@ -84,67 +85,112 @@ const loadLatestVersion = async () => {
   loadLanguageCount();
   loadLatestVersion();
 }, []);
->>>>>>> 5b495f2 (updates)
 
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, "rooms"),
-      (snapshot) => {
-        let online = 0;
-        snapshot.docs.forEach((docSnap) => {
-          if (docSnap.data().isOnline === true) online += 1;
-        });
 
-        setTabletStats({
-          total: snapshot.size,
-          online,
-          offline: snapshot.size - online,
-        });
-        setLoadingTablets(false);
-      },
-      (error) => {
-        console.error("Failed to load tablet stats:", error);
-        setTabletStats({ total: 0, online: 0, offline: 0 });
-        setLoadingTablets(false);
-      }
-    );
-
-    return () => unsubscribe();
-  }, []);
+  // =========================================================
+  // UI
+  // =========================================================
 
   return (
     <div>
+
+      {/* =====================================================
+          HEADER
+      ====================================================== */}
+
       <div className="page-header">
+
         <div>
-          <h1>Dashboard</h1>
-          <p>Welcome to Talk Navi Admin Panel</p>
+
+          <h1>
+            Dashboard
+          </h1>
+
+          <p>
+            Welcome to Talk Navi Admin Panel
+          </p>
+
         </div>
+
       </div>
 
+
+      {/* =====================================================
+          STAT CARDS
+      ====================================================== */}
+
       <div className="dashboard">
-        <div className="stat-card">
-          <span className="stat-label">Languages</span>
-          <strong>{loadingLanguages ? "..." : languageCount}</strong>
-          <span className="stat-description">Total languages</span>
-        </div>
+
+
+        {/* ===================================================
+            LANGUAGES
+        ==================================================== */}
 
         <div className="stat-card">
-          <span className="stat-label">Tablets Online</span>
-          <strong>{loadingTablets ? "..." : tabletStats.online}</strong>
-          <span className="stat-description">
-            {loadingTablets
-              ? "Loading..."
-              : `${tabletStats.offline} offline / ${tabletStats.total} total`}
+
+          <span className="stat-label">
+            Languages
           </span>
+
+
+          <strong>
+            {loadingLanguages
+              ? "..."
+              : languageCount}
+          </strong>
+
+
+          <span className="stat-description">
+            Total languages
+          </span>
+
         </div>
 
+
+        {/* ===================================================
+            SPEAKERS
+        ==================================================== */}
+
         <div className="stat-card">
-          <span className="stat-label">AI Help</span>
-          <strong>Active</strong>
-          <span className="stat-description">Spot Navigation</span>
+
+          <span className="stat-label">
+            Speakers
+          </span>
+
+
+          <strong>
+            0
+          </strong>
+
+
+          <span className="stat-description">
+            Registered speakers
+          </span>
+
         </div>
-<<<<<<< HEAD
-=======
+
+
+        {/* ===================================================
+            AI HELP
+        ==================================================== */}
+
+        <div className="stat-card">
+
+          <span className="stat-label">
+            AI Help
+          </span>
+
+
+          <strong>
+            Active
+          </strong>
+
+
+          <span className="stat-description">
+            Spot Navigation
+          </span>
+
+        </div>
 {/* ===================================================
     APP UPDATE
 =================================================== */}
@@ -165,19 +211,35 @@ const loadLatestVersion = async () => {
 
 </div>
 
->>>>>>> 5b495f2 (updates)
       </div>
 
+
+      {/* =====================================================
+          WELCOME CARD
+      ====================================================== */}
+
       <div className="welcome-card">
-        <h2>Talk Navi Administration</h2>
+
+        <h2>
+          Talk Navi Administration
+        </h2>
+
+
         <p>
-          Manage languages, tablets and AI Help configuration from this
-          dashboard.
+          Manage languages, speakers and AI Help
+          configuration from this dashboard.
         </p>
-        <p>Select an option from the sidebar to continue.</p>
+
+
+        <p>
+          Select an option from the sidebar to continue.
+        </p>
+
       </div>
+
     </div>
   );
 }
+
 
 export default Dashboard;

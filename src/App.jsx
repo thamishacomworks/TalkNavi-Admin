@@ -3,13 +3,13 @@ import "./index.css";
 
 import Dashboard from "./pages/Dashboard";
 import Languages from "./pages/Languages";
-<<<<<<< HEAD
+
 import Tablets from "./pages/Tablets";
 
-=======
+
 import Emergency from "./pages/Emergency";
 import AppUpdates from "./pages/AppUpdates";
->>>>>>> 5b495f2 (updates)
+
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
 
@@ -119,9 +119,9 @@ function App() {
 
           <button className="nav-item">Speakers</button>
 
-<<<<<<< HEAD
+
           <button className="nav-item">AI Help</button>
-=======
+
          <button
   className={`nav-item ${
     currentPage === "emergency" ? "active" : ""
@@ -143,7 +143,7 @@ function App() {
           <button className="nav-item">
             Settings
           </button>
->>>>>>> 5b495f2 (updates)
+
 
           <button className="nav-item">Settings</button>
         </nav>
@@ -162,10 +162,10 @@ function App() {
       <main className="main-content">
         <header className="topbar">
           <div>
-<<<<<<< HEAD
+
             <h1>{pageTitle}</h1>
             <p>Talk Navi Administration</p>
-=======
+
          <h1>
   {currentPage === "dashboard"
     ? "Dashboard"
@@ -181,7 +181,7 @@ function App() {
             <p>
               Talk Navi Administration
             </p>
->>>>>>> 5b495f2 (updates)
+
           </div>
 
           <div className="admin-profile">
@@ -194,11 +194,11 @@ function App() {
           </div>
         </header>
 
-<<<<<<< HEAD
+
         {currentPage === "dashboard" && <Dashboard />}
         {currentPage === "tablets" && <Tablets />}
         {currentPage === "languages" && <Languages />}
-=======
+
         {currentPage === "dashboard" && (
           <Dashboard />
         )}
@@ -212,7 +212,7 @@ function App() {
        {currentPage === "updates" && (
   <AppUpdates />
 )}
->>>>>>> 5b495f2 (updates)
+
       </main>
     </div>
   );

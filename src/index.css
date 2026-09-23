@@ -560,7 +560,7 @@ input {
 .edit-button:hover {
   background: #eff6ff;
 }
-<<<<<<< HEAD
+
 
 /* =========================
    TABLETS
@@ -656,7 +656,8 @@ input {
   .tablet-table-header {
     display: none;
   }
-=======
+}s
+
 .preview-card {
   padding: 16px;
   border: 1px solid #e5e7eb;
@@ -715,5 +716,4 @@ textarea.input-field {
 
 textarea.input-field {
   resize: vertical;
->>>>>>> 5b495f2 (updates)
 }
