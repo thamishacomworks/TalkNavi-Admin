@@ -1,36 +1,36 @@
 import { useEffect, useState } from "react";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, deleteDoc, doc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
+import { buildTabletPairs } from "../utils/tablets";
+
+function StatusBadge({ online }) {
+  return (
+    <span
+      className={
+        online ? "status-badge status-online" : "status-badge status-offline"
+      }
+    >
+      {online ? "Online" : "Offline"}
+    </span>
+  );
+}
 
 function Tablets() {
-  const [tablets, setTablets] = useState([]);
+  const [pairs, setPairs] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [legacyRooms, setLegacyRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [cleaning, setCleaning] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
-
     const unsubscribe = onSnapshot(
       collection(db, "rooms"),
       (snapshot) => {
-        const data = snapshot.docs.map((item) => {
-          const room = item.data();
-          return {
-            id: item.id,
-            deviceName: room.deviceName || room.ownerName || "Unknown tablet",
-            isOnline: room.isOnline === true,
-            active: room.active === true,
-            guestOnline: room.guestOnline === true,
-            roomId: room.roomId || item.id,
-          };
-        });
-
-        data.sort((a, b) => {
-          if (a.isOnline !== b.isOnline) return a.isOnline ? -1 : 1;
-          return String(a.deviceName).localeCompare(String(b.deviceName));
-        });
-
-        setTablets(data);
+        const result = buildTabletPairs(snapshot.docs);
+        setPairs(result.pairs);
+        setStats(result.stats);
+        setLegacyRooms(result.legacyRooms);
         setError("");
         setLoading(false);
       },
@@ -44,88 +44,105 @@ function Tablets() {
     return () => unsubscribe();
   }, []);
 
-  const onlineCount = tablets.filter((t) => t.isOnline).length;
-  const offlineCount = tablets.length - onlineCount;
+  const removableLegacy = legacyRooms.filter((r) => r.active !== true);
+
+  const cleanUpLegacy = async () => {
+    if (removableLegacy.length === 0) return;
+    const ok = window.confirm(
+      `Delete ${removableLegacy.length} old room(s) created by previous app versions?\n` +
+        "Rooms with an active session are kept."
+    );
+    if (!ok) return;
+
+    try {
+      setCleaning(true);
+      await Promise.all(
+        removableLegacy.map((r) => deleteDoc(doc(db, "rooms", r.id)))
+      );
+    } catch (err) {
+      console.error("Failed to delete old rooms:", err);
+      alert("Failed to delete some old rooms.");
+    } finally {
+      setCleaning(false);
+    }
+  };
 
   return (
     <div>
       <div className="dashboard">
         <div className="stat-card">
-          <span className="stat-label">Total</span>
-          <strong>{loading ? "..." : tablets.length}</strong>
-          <span className="stat-description">Registered rooms</span>
+          <span className="stat-label">Main Tablets</span>
+          <strong>{loading ? "..." : `${stats.mainOnline} / ${stats.mainTotal}`}</strong>
+          <span className="stat-description">Online / total</span>
         </div>
 
         <div className="stat-card">
-          <span className="stat-label">Online</span>
-          <strong>{loading ? "..." : onlineCount}</strong>
-          <span className="stat-description">Host QR or in session</span>
+          <span className="stat-label">Guest Tablets</span>
+          <strong>{loading ? "..." : `${stats.guestOnline} / ${stats.guestTotal}`}</strong>
+          <span className="stat-description">Online / total</span>
         </div>
 
         <div className="stat-card">
           <span className="stat-label">Offline</span>
-          <strong>{loading ? "..." : offlineCount}</strong>
-          <span className="stat-description">After QR reset</span>
+          <strong>{loading ? "..." : stats.offline}</strong>
+          <span className="stat-description">Main + Guest after reset</span>
         </div>
       </div>
 
-      <div className="language-card">
-        <div className="tablet-table-header">
-          <span>Device</span>
-          <span>Status</span>
-          <span>Session</span>
-          <span>Room ID</span>
+      {!loading && removableLegacy.length > 0 && (
+        <div className="legacy-banner">
+          <span>
+            {removableLegacy.length} old room(s) from previous app versions are
+            hidden.
+          </span>
+          <button
+            type="button"
+            className="edit-button"
+            onClick={cleanUpLegacy}
+            disabled={cleaning}
+          >
+            {cleaning ? "Deleting..." : "Delete old rooms"}
+          </button>
         </div>
+      )}
 
-        {loading && <div className="tablet-empty">Loading tablets...</div>}
+      {loading && <div className="tablet-empty">Loading tablets...</div>}
 
-        {!loading && error && (
-          <div className="tablet-empty tablet-error">{error}</div>
-        )}
+      {!loading && error && (
+        <div className="tablet-empty tablet-error">{error}</div>
+      )}
 
-        {!loading && !error && tablets.length === 0 && (
-          <div className="tablet-empty">
-            No tablets yet. Open Host QR on a Main tablet to register one.
-          </div>
-        )}
+      {!loading && !error && pairs.length === 0 && (
+        <div className="tablet-empty">
+          No tablets yet. Open Host QR on a Main tablet to register one.
+        </div>
+      )}
 
+      <div className="pair-grid">
         {!loading &&
           !error &&
-          tablets.map((tablet) => (
-            <div key={tablet.id} className="tablet-row">
-              <div>
-                <strong>{tablet.deviceName}</strong>
-                <span className="tablet-meta">
-                  {tablet.guestOnline ? "Guest present" : "No guest"}
-                </span>
+          pairs.map((pair) => (
+            <div key={pair.roomId} className="pair-card">
+              <div className="pair-row">
+                <span className="role-chip role-main">Main</span>
+                <strong className="pair-name">{pair.main.name}</strong>
+                <StatusBadge online={pair.main.online} />
               </div>
 
-              <div>
-                <span
-                  className={
-                    tablet.isOnline
-                      ? "status-badge status-online"
-                      : "status-badge status-offline"
-                  }
-                >
-                  {tablet.isOnline ? "Online" : "Offline"}
-                </span>
+              <div className="pair-row">
+                <span className="role-chip role-guest">Guest</span>
+                {pair.guest ? (
+                  <>
+                    <strong className="pair-name">{pair.guest.name}</strong>
+                    <StatusBadge online={pair.guest.online} />
+                  </>
+                ) : (
+                  <span className="pair-name pair-empty">Not connected</span>
+                )}
               </div>
 
-              <div>
-                <span
-                  className={
-                    tablet.active
-                      ? "status-badge status-connected"
-                      : "status-badge status-waiting"
-                  }
-                >
-                  {tablet.active ? "Connected" : "Waiting"}
-                </span>
-              </div>
-
-              <div className="tablet-room-id" title={tablet.roomId}>
-                {tablet.roomId}
+              <div className="pair-footer">
+                {pair.active ? "Session connected" : "Waiting for guest (QR)"}
               </div>
             </div>
           ))}

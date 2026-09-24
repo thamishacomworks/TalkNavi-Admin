@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { collection, doc, getDocs, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
+import { buildTabletPairs } from "../utils/tablets";
 
 function Dashboard({ onNavigate }) {
   const [languageCount, setLanguageCount] = useState(0);
@@ -38,14 +39,11 @@ function Dashboard({ onNavigate }) {
     const unsubRooms = onSnapshot(
       collection(db, "rooms"),
       (snapshot) => {
-        let online = 0;
-        snapshot.docs.forEach((docSnap) => {
-          if (docSnap.data().isOnline === true) online += 1;
-        });
+        const { stats } = buildTabletPairs(snapshot.docs);
         setTabletStats({
-          total: snapshot.size,
-          online,
-          offline: snapshot.size - online,
+          total: stats.total,
+          online: stats.online,
+          offline: stats.offline,
         });
         setLoadingTablets(false);
       },

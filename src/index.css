@@ -695,6 +695,86 @@ input {
 }
 
 /* =========================
+   TABLET PAIRS
+========================= */
+
+.pair-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.pair-card {
+  background: white;
+  border-radius: 16px;
+  padding: 18px 20px;
+  box-shadow: 0 5px 20px rgba(30, 50, 90, 0.06);
+}
+
+.pair-row {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.pair-row + .pair-row {
+  border-top: 1px solid #edf0f5;
+}
+
+.pair-name {
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pair-empty {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.role-chip {
+  display: inline-flex;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.role-main {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.role-guest {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.pair-footer {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #8a94a6;
+}
+
+.legacy-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+/* =========================
    FORMS (Emergency / shared)
 ========================= */
 

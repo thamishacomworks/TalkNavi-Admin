@@ -10,6 +10,7 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { db, storage } from "../firebase";
+import { buildTabletPairs, flattenDevices } from "../utils/tablets";
 
 export default function AppUpdates() {
   const [apkFile, setApkFile] = useState(null);
@@ -59,22 +60,8 @@ export default function AppUpdates() {
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "rooms"), (snapshot) => {
-      const list = snapshot.docs.map((roomDoc) => {
-        const room = roomDoc.data();
-        return {
-          id: roomDoc.id,
-          name: room.deviceName || room.ownerName || "Unknown tablet",
-          online: room.isOnline === true,
-          active: room.active === true,
-        };
-      });
-
-      list.sort((a, b) => {
-        if (a.online !== b.online) return a.online ? -1 : 1;
-        return String(a.name).localeCompare(String(b.name));
-      });
-
-      setDevices(list);
+      const { pairs } = buildTabletPairs(snapshot.docs);
+      setDevices(flattenDevices(pairs));
     });
 
     return () => unsubscribe();
@@ -253,7 +240,7 @@ export default function AppUpdates() {
             <div className="device-left">
               <div>
                 <strong>{device.name}</strong>
-                <p>{device.active ? "Session connected" : "Waiting / idle"}</p>
+                <p>{device.role}</p>
               </div>
             </div>
             <span
