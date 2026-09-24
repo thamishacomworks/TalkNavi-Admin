@@ -1,40 +1,38 @@
-import { Link, useLocation } from "react-router-dom";
-
-const menus = [
-  { name: "Dashboard", path: "/" },
-  { name: "Languages", path: "/languages" },
-  { name: "Restaurants", path: "/restaurants" },
-  { name: "AI Help", path: "/ai-help" },
-  { name: "Transportation", path: "/transportation" },
-
-  // NEW
-  { name: "App Updates", path: "/app-updates" },
+const MENUS = [
+  { id: "dashboard", label: "Dashboard" },
+  { id: "tablets", label: "Tablets" },
+  { id: "languages", label: "Languages" },
+  { id: "app-updates", label: "App Updates" },
+  { id: "emergency", label: "Emergency" },
 ];
 
-export default function Sidebar() {
-  const location = useLocation();
-
+export default function Sidebar({ currentPage, onNavigate, onLogout }) {
   return (
-    <div className="w-64 min-h-screen bg-slate-900 text-white p-5">
-      <h2 className="text-2xl font-bold mb-8 text-center">
-        Talk Navi
-      </h2>
-
-      <div className="space-y-2">
-        {menus.map((menu) => (
-          <Link
-            key={menu.path}
-            to={menu.path}
-            className={`block rounded-lg px-4 py-3 transition ${
-              location.pathname === menu.path
-                ? "bg-blue-600"
-                : "hover:bg-slate-700"
-            }`}
-          >
-            {menu.name}
-          </Link>
-        ))}
+    <aside className="sidebar">
+      <div className="brand">
+        <div className="brand-logo">TN</div>
+        <div>
+          <h2>Talk Navi</h2>
+          <span>Admin Panel</span>
+        </div>
       </div>
-    </div>
+
+      <nav>
+        {MENUS.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={`nav-item ${currentPage === item.id ? "active" : ""}`}
+            onClick={() => onNavigate(item.id)}
+          >
+            {item.label}
+          </button>
+        ))}
+      </nav>
+
+      <button type="button" className="logout-button" onClick={onLogout}>
+        Logout
+      </button>
+    </aside>
   );
 }

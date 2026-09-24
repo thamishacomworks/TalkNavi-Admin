@@ -1,218 +1,125 @@
 import { useState } from "react";
 import "./index.css";
 
+import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
-import Languages from "./pages/Languages";
-
 import Tablets from "./pages/Tablets";
-
-
-import Emergency from "./pages/Emergency";
+import Languages from "./pages/Languages";
 import AppUpdates from "./pages/AppUpdates";
+import Emergency from "./pages/Emergency";
+
+const PAGES = {
+  dashboard: { title: "Dashboard", subtitle: "Overview" },
+  tablets: { title: "Tablets", subtitle: "Online / offline device status" },
+  languages: { title: "Languages", subtitle: "Language management" },
+  "app-updates": { title: "App Updates", subtitle: "Publish APK to tablets" },
+  emergency: { title: "Emergency", subtitle: "AI Help emergency content" },
+};
+
+function LoginScreen({ email, password, setEmail, setPassword, onSubmit }) {
+  return (
+    <div className="login-page">
+      <div className="login-card">
+        <div className="logo">TN</div>
+        <h1>Talk Navi</h1>
+        <p className="login-subtitle">Admin Panel</p>
+
+        <form onSubmit={onSubmit}>
+          <div className="form-group">
+            <label>Email</label>
+            <input
+              type="email"
+              placeholder="admin@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Password</label>
+            <input
+              type="password"
+              placeholder="Enter password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          <button type="submit" className="login-button">
+            Sign In
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [currentPage, setCurrentPage] = useState("dashboard");
 
   const handleLogin = (e) => {
     e.preventDefault();
-
     if (email && password) {
       setLoggedIn(true);
     }
   };
 
-  const pageTitle =
-    currentPage === "dashboard"
-      ? "Dashboard"
-      : currentPage === "tablets"
-        ? "Tablet Management"
-        : "Language Management";
+  const handleLogout = () => {
+    setLoggedIn(false);
+    setCurrentPage("dashboard");
+    setPassword("");
+  };
 
   if (!loggedIn) {
     return (
-      <div className="login-page">
-        <div className="login-card">
-          <div className="logo">TN</div>
-
-          <h1>Talk Navi</h1>
-
-          <p className="login-subtitle">Admin Panel</p>
-
-          <form onSubmit={handleLogin}>
-            <div className="form-group">
-              <label>Email</label>
-
-              <input
-                type="email"
-                placeholder="admin@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Password</label>
-
-              <input
-                type="password"
-                placeholder="Enter password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            <button type="submit" className="login-button">
-              Sign In
-            </button>
-          </form>
-        </div>
-      </div>
+      <LoginScreen
+        email={email}
+        password={password}
+        setEmail={setEmail}
+        setPassword={setPassword}
+        onSubmit={handleLogin}
+      />
     );
   }
 
+  const meta = PAGES[currentPage] || PAGES.dashboard;
+
   return (
     <div className="admin-layout">
-      <aside className="sidebar">
-        <div className="brand">
-          <div className="brand-logo">TN</div>
-
-          <div>
-            <h2>Talk Navi</h2>
-            <span>Admin Panel</span>
-          </div>
-        </div>
-
-        <nav>
-          <button
-            className={`nav-item ${
-              currentPage === "dashboard" ? "active" : ""
-            }`}
-            onClick={() => setCurrentPage("dashboard")}
-          >
-            Dashboard
-          </button>
-
-          <button
-            className={`nav-item ${
-              currentPage === "tablets" ? "active" : ""
-            }`}
-            onClick={() => setCurrentPage("tablets")}
-          >
-            Tablets
-          </button>
-
-          <button
-            className={`nav-item ${
-              currentPage === "languages" ? "active" : ""
-            }`}
-            onClick={() => setCurrentPage("languages")}
-          >
-            Languages
-          </button>
-
-          <button className="nav-item">Speakers</button>
-
-
-          <button className="nav-item">AI Help</button>
-
-         <button
-  className={`nav-item ${
-    currentPage === "emergency" ? "active" : ""
-  }`}
-  onClick={() => setCurrentPage("emergency")}
->
-  AI Help / Emergency
-</button>
-
-<button
-  className={`nav-item ${
-    currentPage === "updates" ? "active" : ""
-  }`}
-  onClick={() => setCurrentPage("updates")}
->
-  📲 App Updates
-</button>
-
-          <button className="nav-item">
-            Settings
-          </button>
-
-
-          <button className="nav-item">Settings</button>
-        </nav>
-
-        <button
-          className="logout-button"
-          onClick={() => {
-            setLoggedIn(false);
-            setCurrentPage("dashboard");
-          }}
-        >
-          Logout
-        </button>
-      </aside>
+      <Sidebar
+        currentPage={currentPage}
+        onNavigate={setCurrentPage}
+        onLogout={handleLogout}
+      />
 
       <main className="main-content">
         <header className="topbar">
           <div>
-
-            <h1>{pageTitle}</h1>
-            <p>Talk Navi Administration</p>
-
-         <h1>
-  {currentPage === "dashboard"
-    ? "Dashboard"
-    : currentPage === "languages"
-    ? "Language Management"
-    : currentPage === "emergency"
-    ? "AI Help / Emergency"
-    : currentPage === "updates"
-    ? "App Updates"
-    : "Talk Navi Admin"}
-</h1>
-
-            <p>
-              Talk Navi Administration
-            </p>
-
+            <h1>{meta.title}</h1>
+            <p>{meta.subtitle}</p>
           </div>
 
           <div className="admin-profile">
             <div className="profile-avatar">A</div>
-
             <div>
               <strong>Administrator</strong>
-              <span>Admin</span>
+              <span>{email || "Admin"}</span>
             </div>
           </div>
         </header>
 
-
-        {currentPage === "dashboard" && <Dashboard />}
+        {currentPage === "dashboard" && (
+          <Dashboard onNavigate={setCurrentPage} />
+        )}
         {currentPage === "tablets" && <Tablets />}
         {currentPage === "languages" && <Languages />}
-
-        {currentPage === "dashboard" && (
-          <Dashboard />
-        )}
-
-        {currentPage === "languages" && (
-          <Languages />
-        )}
-        {currentPage === "emergency" && (
-          <Emergency />
-       )}
-       {currentPage === "updates" && (
-  <AppUpdates />
-)}
-
+        {currentPage === "app-updates" && <AppUpdates />}
+        {currentPage === "emergency" && <Emergency />}
       </main>
     </div>
   );

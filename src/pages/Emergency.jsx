@@ -181,16 +181,6 @@ const [policeDescription, setPoliceDescription] = useState("");
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <h1>AI Help / Emergency</h1>
-          <p>
-            Manage Emergency information and contacts for all
-            languages.
-          </p>
-        </div>
-      </div>
-
       {/* Current Firestore Data */}
       <div className="welcome-card">
         <h2>Current Firestore Data</h2>

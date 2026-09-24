@@ -21,8 +21,6 @@ function Tablets() {
             isOnline: room.isOnline === true,
             active: room.active === true,
             guestOnline: room.guestOnline === true,
-            mainOnline: room.mainOnline === true,
-            password: room.password || "",
             roomId: room.roomId || item.id,
           };
         });
@@ -51,13 +49,6 @@ function Tablets() {
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <h1>Tablets</h1>
-          <p>Deployed tablets with live online / offline status</p>
-        </div>
-      </div>
-
       <div className="dashboard">
         <div className="stat-card">
           <span className="stat-label">Total</span>
@@ -68,7 +59,7 @@ function Tablets() {
         <div className="stat-card">
           <span className="stat-label">Online</span>
           <strong>{loading ? "..." : onlineCount}</strong>
-          <span className="stat-description">Ready or in session</span>
+          <span className="stat-description">Host QR or in session</span>
         </div>
 
         <div className="stat-card">
@@ -86,9 +77,7 @@ function Tablets() {
           <span>Room ID</span>
         </div>
 
-        {loading && (
-          <div className="tablet-empty">Loading tablets...</div>
-        )}
+        {loading && <div className="tablet-empty">Loading tablets...</div>}
 
         {!loading && error && (
           <div className="tablet-empty tablet-error">{error}</div>
@@ -96,7 +85,7 @@ function Tablets() {
 
         {!loading && !error && tablets.length === 0 && (
           <div className="tablet-empty">
-            No tablets yet. Deploy a Main tablet and open the Host QR screen.
+            No tablets yet. Open Host QR on a Main tablet to register one.
           </div>
         )}
 
