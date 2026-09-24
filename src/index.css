@@ -560,3 +560,99 @@ input {
 .edit-button:hover {
   background: #eff6ff;
 }
+
+/* =========================
+   TABLETS
+========================= */
+
+.tablet-table-header,
+.tablet-row {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr 0.8fr 1.6fr;
+  align-items: center;
+  padding: 18px 24px;
+  gap: 16px;
+}
+
+.tablet-table-header {
+  background: #f8fafc;
+  color: #687386;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tablet-row {
+  border-top: 1px solid #edf0f5;
+  font-size: 14px;
+}
+
+.tablet-row strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.tablet-meta {
+  display: block;
+  color: #8a94a6;
+  font-size: 12px;
+}
+
+.tablet-room-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: #475569;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tablet-empty {
+  padding: 28px 24px;
+  color: #687386;
+  border-top: 1px solid #edf0f5;
+}
+
+.tablet-error {
+  color: #b91c1c;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-online {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.status-offline {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.status-connected {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-waiting {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+@media (max-width: 900px) {
+  .tablet-table-header,
+  .tablet-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .tablet-table-header {
+    display: none;
+  }
+}
