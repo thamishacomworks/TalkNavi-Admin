@@ -85,7 +85,10 @@ export default function AppUpdates() {
       const fileName = `TalkNavi_v${versionName.trim()}.apk`;
       const storageRef = ref(storage, `app_updates/${fileName}`);
 
-      await uploadBytes(storageRef, apkFile);
+      await uploadBytes(storageRef, apkFile, {
+        contentType: "application/vnd.android.package-archive",
+        contentDisposition: `attachment; filename="${fileName}"`,
+      });
       const apkUrl = await getDownloadURL(storageRef);
       const apkSizeMB = (apkFile.size / (1024 * 1024)).toFixed(2);
 
@@ -221,39 +224,6 @@ export default function AppUpdates() {
             Force update on all tablets
           </label>
         </div>
-      </div>
-
-      <div className="devices-card">
-        <div className="devices-header">
-          <h3>Tablets</h3>
-          <span className="online-chip">
-            {onlineCount} of {devices.length} online
-          </span>
-        </div>
-
-        {devices.length === 0 && (
-          <div className="devices-empty">No tablets registered yet.</div>
-        )}
-
-        {devices.map((device) => (
-          <div className="device-row" key={device.id}>
-            <div className="device-left">
-              <div>
-                <strong>{device.name}</strong>
-                <p>{device.role}</p>
-              </div>
-            </div>
-            <span
-              className={
-                device.online
-                  ? "update-status-online"
-                  : "update-status-offline"
-              }
-            >
-              {device.online ? "Online" : "Offline"}
-            </span>
-          </div>
-        ))}
       </div>
     </div>
   );

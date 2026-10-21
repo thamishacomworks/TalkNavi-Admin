@@ -12,9 +12,77 @@ function isTabletName(name) {
 }
 
 function mainKey(room) {
+  if (room.mainDeviceId) {
+    return tabletNameFromDeviceId(room.mainDeviceId) || `id:${room.mainDeviceId}`;
+  }
   const name = room.deviceName || room.ownerName;
   if (isTabletName(name)) return name;
-  return room.mainDeviceId || `room:${room.id}`;
+  return `room:${room.id}`;
+}
+
+function tabletNameFromDeviceId(deviceId) {
+  if (typeof deviceId !== "string" || deviceId.length < 6) return "";
+  return `Tablet-${deviceId.slice(-6).toUpperCase()}`;
+}
+
+function customLabel(value) {
+  if (typeof value !== "string") return "";
+  const trimmed = value.trim();
+  if (!trimmed || isTabletName(trimmed)) return "";
+  return trimmed;
+}
+
+function hardwareMainName(room) {
+  if (isTabletName(room.deviceName)) return room.deviceName;
+  if (isTabletName(room.ownerName)) return room.ownerName;
+  if (room.mainDeviceId) return tabletNameFromDeviceId(room.mainDeviceId);
+  return room.deviceName || room.ownerName || "";
+}
+
+function hardwareGuestName(room, roomsByDeviceId) {
+  if (isTabletName(room.guestDeviceName)) return room.guestDeviceName;
+
+  const deviceId = room.guestDeviceId;
+  if (!deviceId) return room.guestDeviceName || "";
+
+  const other = roomsByDeviceId.get(deviceId);
+  const otherName = other?.deviceName || other?.ownerName;
+  if (isTabletName(otherName)) return otherName;
+  return tabletNameFromDeviceId(deviceId);
+}
+
+function guestIdentityKey(room) {
+  if (room.guestDeviceId) {
+    return tabletNameFromDeviceId(room.guestDeviceId) || `id:${room.guestDeviceId}`;
+  }
+  if (isTabletName(room.guestDeviceName)) return room.guestDeviceName;
+  return room.guestDeviceName || "";
+}
+
+function mainPresentation(room) {
+  const device =
+    customLabel(room.deviceName) || customLabel(room.ownerName);
+  const code = hardwareMainName(room);
+  return {
+    name: device || code || "Main tablet",
+    deviceName: "",
+  };
+}
+
+function guestPresentation(room, roomsByDeviceId) {
+  const other = room.guestDeviceId
+    ? roomsByDeviceId.get(room.guestDeviceId)
+    : null;
+  const device =
+    customLabel(room.guestDeviceName) ||
+    customLabel(other?.deviceName) ||
+    customLabel(other?.ownerName);
+  const code = hardwareGuestName(room, roomsByDeviceId);
+  return {
+    key: guestIdentityKey(room),
+    name: device || code || "Guest tablet",
+    deviceName: "",
+  };
 }
 
 function isBetter(a, b) {
@@ -40,28 +108,50 @@ export function buildTabletPairs(docs) {
   const rooms = all.filter(isKnown);
   const legacyRooms = all.filter((r) => !isKnown(r));
 
+  const roomsByDeviceId = new Map();
+  rooms.forEach((r) => {
+    if (r.mainDeviceId) roomsByDeviceId.set(r.mainDeviceId, r);
+  });
+
   let pairs = rooms
     .filter((r) => r.mainInGuestMode !== true)
-    .map((r) => ({
-      roomId: r.id,
-      active: r.active === true,
-      key: mainKey(r),
-      rank: r.mainDeviceId ? 1 : 0,
-      time: toMillis(r.guestConnectedAt),
-      main: {
-        name: r.deviceName || r.ownerName || "Main tablet",
-        online: r.isOnline === true,
-      },
-      guest:
-        r.guestDeviceName || r.guestDeviceId
+    .map((r) => {
+      const mainView = mainPresentation(r);
+      const guestView = guestPresentation(r, roomsByDeviceId);
+      const guestIdentified = Boolean(guestView.key || r.guestDeviceId);
+      const guestLive =
+        guestIdentified &&
+        (r.guestOnline === true || r.active === true);
+
+      return {
+        roomId: r.id,
+        pairName: customLabel(r.pairName),
+        adminBlocked: r.adminBlocked === true,
+        adminBlockMessage:
+          typeof r.adminBlockMessage === "string" ? r.adminBlockMessage : "",
+        active: r.active === true,
+        connected: guestLive,
+        key: mainKey(r),
+        rank: r.mainDeviceId ? 1 : 0,
+        time: toMillis(r.guestConnectedAt),
+        main: {
+          name: mainView.name,
+          deviceName: mainView.deviceName,
+          deviceId: r.mainDeviceId || "",
+          online: r.isOnline === true,
+        },
+        guest: guestLive
           ? {
-              key: r.guestDeviceName || r.guestDeviceId,
-              name: r.guestDeviceName || "Guest tablet",
+              key: guestView.key,
+              name: guestView.name,
+              deviceName: guestView.deviceName,
+              deviceId: r.guestDeviceId || "",
               online: r.guestOnline === true,
               connectedAt: toMillis(r.guestConnectedAt),
             }
           : null,
-    }));
+      };
+    });
 
   // One card per Main tablet (e.g. old UUID room + new room for the same tablet)
   const bestMain = new Map();
@@ -116,9 +206,11 @@ export function buildTabletPairs(docs) {
     if (p.guest && bestGuestRoom.get(p.guest.key)?.roomId !== p.roomId) {
       p.guest = null;
     }
+    p.connected = Boolean(p.guest);
   });
 
   pairs.sort((a, b) => {
+    if (a.connected !== b.connected) return a.connected ? -1 : 1;
     if (a.main.online !== b.main.online) return a.main.online ? -1 : 1;
     return String(a.main.name).localeCompare(String(b.main.name));
   });
@@ -134,6 +226,7 @@ export function buildTabletPairs(docs) {
   stats.total = stats.mainTotal + stats.guestTotal;
   stats.online = stats.mainOnline + stats.guestOnline;
   stats.offline = stats.total - stats.online;
+  stats.connected = pairs.filter((p) => p.connected && p.guest).length;
 
   return { pairs, stats, legacyRooms };
 }
@@ -142,9 +235,19 @@ export function buildTabletPairs(docs) {
 export function flattenDevices(pairs) {
   const list = [];
   pairs.forEach((p) => {
-    list.push({ id: `${p.roomId}_main`, role: "Main", ...p.main });
+    list.push({
+      id: `${p.roomId}_main`,
+      role: "Main",
+      ...p.main,
+      pairedWith: p.guest?.name || "",
+    });
     if (p.guest) {
-      list.push({ id: `${p.roomId}_guest`, role: "Guest", ...p.guest });
+      list.push({
+        id: `${p.roomId}_guest`,
+        role: "Guest",
+        ...p.guest,
+        pairedWith: p.main.name,
+      });
     }
   });
   return list;

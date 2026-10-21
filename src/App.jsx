@@ -10,7 +10,7 @@ import Emergency from "./pages/Emergency";
 
 const PAGES = {
   dashboard: { title: "Dashboard", subtitle: "Overview" },
-  tablets: { title: "Tablets", subtitle: "Online / offline device status" },
+  tablets: { title: "Tablets", subtitle: "Which tablets are connected as Main and Guest" },
   languages: { title: "Languages", subtitle: "Language management" },
   "app-updates": { title: "App Updates", subtitle: "Publish APK to tablets" },
   emergency: { title: "Emergency", subtitle: "AI Help emergency content" },
