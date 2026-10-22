@@ -25,6 +25,10 @@ function tabletNameFromDeviceId(deviceId) {
   return `Tablet-${deviceId.slice(-6).toUpperCase()}`;
 }
 
+function normalizeName(value) {
+  return typeof value === "string" ? value.trim().toLowerCase() : "";
+}
+
 function customLabel(value) {
   if (typeof value !== "string") return "";
   const trimmed = value.trim();
@@ -229,6 +233,94 @@ export function buildTabletPairs(docs) {
   stats.connected = pairs.filter((p) => p.connected && p.guest).length;
 
   return { pairs, stats, legacyRooms };
+}
+
+function liveTabletOnline(deviceName, pairs) {
+  const key = normalizeName(deviceName);
+  if (!key) return false;
+  return pairs.some(
+    (pair) =>
+      (normalizeName(pair.main?.name) === key && pair.main.online) ||
+      (pair.guest && normalizeName(pair.guest.name) === key && pair.guest.online)
+  );
+}
+
+/** Role follows how the tablet is actually opened, not a value typed in admin. */
+function liveTabletType(deviceName, pairs) {
+  const key = normalizeName(deviceName);
+  if (!key) return "";
+  const asGuest = pairs.some(
+    (pair) => pair.guest && normalizeName(pair.guest.name) === key
+  );
+  if (asGuest) return "guest";
+  const asMain = pairs.some((pair) => normalizeName(pair.main?.name) === key);
+  if (asMain) return "main";
+  return "";
+}
+
+function connectionForUser(tablets, pairs) {
+  const names = new Set(
+    tablets.map((tablet) => normalizeName(tablet.deviceName)).filter(Boolean)
+  );
+  return (
+    pairs.find(
+      (pair) =>
+        pair.connected &&
+        pair.guest &&
+        names.has(normalizeName(pair.main.name)) &&
+        names.has(normalizeName(pair.guest.name))
+    ) || null
+  );
+}
+
+/** One card per user, listing the tablets registered to that user. */
+export function buildUserCards(users, tablets, pairs, rooms = []) {
+  const tabletsByUser = new Map();
+  tablets.forEach((tablet) => {
+    const list = tabletsByUser.get(tablet.userId) || [];
+    list.push(tablet);
+    tabletsByUser.set(tablet.userId, list);
+  });
+
+  return users
+    .map((user) => {
+      const owned = (tabletsByUser.get(user.id) || [])
+        .slice()
+        .map((tablet) => ({
+          id: tablet.id,
+          deviceName: tablet.deviceName || "Tablet",
+          serialNumber: tablet.serialNumber || "",
+          type: liveTabletType(tablet.deviceName, pairs),
+          online: liveTabletOnline(tablet.deviceName, pairs),
+        }))
+        .sort((a, b) => {
+          const rank = (type) => (type === "main" ? 0 : type === "guest" ? 1 : 2);
+          if (rank(a.type) !== rank(b.type)) return rank(a.type) - rank(b.type);
+          return String(a.deviceName).localeCompare(String(b.deviceName));
+        });
+      const connection = connectionForUser(owned, pairs);
+      const names = new Set(owned.map((tablet) => normalizeName(tablet.deviceName)).filter(Boolean));
+      const matchedRooms = [];
+      const seenRooms = new Set();
+      rooms.forEach((room) => {
+        if (!names.has(normalizeName(room.deviceName)) || seenRooms.has(room.id)) return;
+        seenRooms.add(room.id);
+        matchedRooms.push(room);
+      });
+      const blockedRoom = matchedRooms.find((room) => room.adminBlocked);
+      const messageRoom = blockedRoom || matchedRooms.find((room) => room.adminBlockMessage);
+      return {
+        id: user.id,
+        name: user.name || "User",
+        tablets: owned,
+        connected: Boolean(connection),
+        roomIds: matchedRooms.map((room) => room.id),
+        adminBlocked: Boolean(blockedRoom),
+        adminBlockMessage: messageRoom?.adminBlockMessage || "",
+      };
+    })
+    .filter((card) => card.tablets.length > 0)
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 /** Flat device list (Main + Guest) for simple lists such as App Updates. */

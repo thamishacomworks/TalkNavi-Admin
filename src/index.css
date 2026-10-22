@@ -381,28 +381,6 @@ input {
   transition: 0.15s ease;
 }
 
-.dashboard-links {
-  list-style: none;
-  margin-top: 16px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.dashboard-links button {
-  border: 1px solid #d8deea;
-  background: white;
-  color: #2563eb;
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.dashboard-links button:hover {
-  background: #eff6ff;
-}
-
 .stat-label {
   display: block;
 
@@ -419,6 +397,102 @@ input {
   font-size: 30px;
 
   margin-bottom: 8px;
+}
+
+.stat-card-disconnect strong,
+.dashboard-home .stat-disconnect strong {
+  color: #b91c1c;
+}
+
+.stat-card-connected strong,
+.dashboard-home .stat-connected strong {
+  color: #15803d;
+}
+
+.dashboard-home {
+  gap: 16px;
+}
+
+.dashboard-home .stat-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 118px;
+  padding: 20px 20px 20px 24px;
+  overflow: hidden;
+  border: 1px solid #e6edf5;
+  border-radius: 18px;
+  background: white;
+}
+
+.dashboard-home .stat-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--accent, #2563eb);
+}
+
+.dashboard-home .stat-users { --accent: #2563eb; }
+.dashboard-home .stat-disconnect { --accent: #b91c1c; }
+.dashboard-home .stat-connected { --accent: #15803d; }
+.dashboard-home .stat-languages { --accent: #6d28d9; }
+.dashboard-home .stat-tablets { --accent: #0e7490; }
+.dashboard-home .stat-version { --accent: #c2410c; }
+
+.dashboard-home .stat-icon {
+  width: 48px;
+  height: 48px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent) 12%, white);
+  color: var(--accent);
+}
+
+.dashboard-home .stat-icon svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dashboard-home .stat-copy {
+  min-width: 0;
+}
+
+.dashboard-home .stat-label {
+  margin-bottom: 6px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dashboard-home .stat-card strong {
+  margin-bottom: 6px;
+  font-size: 32px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.dashboard-home .stat-card-button:hover {
+  border-color: color-mix(in srgb, var(--accent) 40%, #e6edf5);
+  box-shadow: 0 14px 30px rgba(30, 50, 90, 0.1);
+  transform: translateY(-2px);
+}
+
+.dashboard-home .stat-card-button:focus-visible {
+  outline: 2px solid var(--accent, #2563eb);
+  outline-offset: 2px;
 }
 
 .stat-description {
@@ -467,9 +541,17 @@ input {
   .dashboard {
     grid-template-columns: 1fr;
   }
+
+  .dashboard-home {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 650px) {
+
+  .dashboard-home {
+    grid-template-columns: 1fr;
+  }
 
   .admin-layout {
     flex-direction: column;
@@ -853,6 +935,15 @@ input {
 .pair-card-title {
   display: block;
   font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.pair-device-id {
+  color: #64748b;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .pair-name-form {

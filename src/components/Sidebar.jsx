@@ -1,5 +1,6 @@
 const MENUS = [
   { id: "dashboard", label: "Dashboard" },
+  { id: "users", label: "Users" },
   { id: "tablets", label: "Tablets" },
   { id: "languages", label: "Languages" },
   { id: "app-updates", label: "App Updates" },

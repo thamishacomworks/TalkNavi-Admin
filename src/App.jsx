@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "./index.css";
 
+import Users from "./pages/Users";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import Tablets from "./pages/Tablets";
@@ -9,8 +10,9 @@ import AppUpdates from "./pages/AppUpdates";
 import Emergency from "./pages/Emergency";
 
 const PAGES = {
+  users: { title: "Users", subtitle: "Manage users and their tablets" },
   dashboard: { title: "Dashboard", subtitle: "Overview" },
-  tablets: { title: "Tablets", subtitle: "Which tablets are connected as Main and Guest" },
+  tablets: { title: "Tablets", subtitle: "Each user and the tablets added for them" },
   languages: { title: "Languages", subtitle: "Language management" },
   "app-updates": { title: "App Updates", subtitle: "Publish APK to tablets" },
   emergency: { title: "Emergency", subtitle: "AI Help emergency content" },
@@ -65,6 +67,7 @@ function App() {
   const handleLogin = (e) => {
     e.preventDefault();
     if (email && password) {
+      setCurrentPage("dashboard");
       setLoggedIn(true);
     }
   };
@@ -116,6 +119,7 @@ function App() {
         {currentPage === "dashboard" && (
           <Dashboard onNavigate={setCurrentPage} />
         )}
+        {currentPage === "users" && <Users />}
         {currentPage === "tablets" && <Tablets />}
         {currentPage === "languages" && <Languages />}
         {currentPage === "app-updates" && <AppUpdates />}
