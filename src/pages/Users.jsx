@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, query, runTransaction, serverTimestamp, updateDoc, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { buildUserCards } from "../utils/tablets";
@@ -11,6 +11,16 @@ const serialKey = (value) => encodeURIComponent(value.trim().toUpperCase().repla
 const describeError = (error) => error.code === "permission-denied"
   ? "Firestore access was denied. Check your database permissions."
   : "Could not save or load data. Check your connection and try again.";
+const historyCollection = (userId) => collection(db, "users", userId, "connectionHistory");
+const connectionStamp = () => {
+  const now = new Date();
+  const pad = (value) => String(value).padStart(2, "0");
+  return {
+    date: `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`,
+    time: `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`,
+    createdAt: serverTimestamp(),
+  };
+};
 
 export default function Users() {
   const [users, setUsers] = useState([]);
@@ -86,9 +96,13 @@ export default function Users() {
     if (!ok || deletingId) return;
     setDeletingId(user.id); setError("");
     try {
-      const tablets = await getDocs(query(collection(db, "userTablets"), where("userId", "==", user.id)));
+      const [tablets, history] = await Promise.all([
+        getDocs(query(collection(db, "userTablets"), where("userId", "==", user.id))),
+        getDocs(historyCollection(user.id)),
+      ]);
       await Promise.all([
         deleteDoc(doc(db, "users", user.id)),
+        ...history.docs.map((item) => deleteDoc(item.ref)),
         ...tablets.docs.flatMap((item) => {
           const serial = item.data().serialNumber;
           const removals = [deleteDoc(item.ref)];
@@ -108,57 +122,46 @@ export default function Users() {
   }, [users, registered, rooms]);
 
   const selected = users.find((user) => user.id === panel?.id);
+  const selectedLink = selected
+    ? (disconnectByUser.get(selected.id) || { roomIds: [], adminBlocked: false })
+    : null;
   return <div className="users-page">
     {error && !adding && <p role="alert" className="users-error">{error}</p>}
-    <div className="users-page-head">
-      <button type="button" className="users-add" onClick={openAdd}>
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 5v14M5 12h14" />
-        </svg>
-        Add User
-      </button>
-    </div>
-    <section className="users-panel">
-      {loading ? <p>Loading users...</p> : users.length === 0 ? <p>No users yet. Use Add User to add one.</p> :
-        <div className="users-table-wrap"><table className="users-table users-directory">
-          <thead><tr>
-            <th>Name</th><th>Address</th><th>Email</th><th>Phone number</th><th></th>
-          </tr></thead>
-          <tbody>{users.map((user) => {
-            const link = disconnectByUser.get(user.id) || { roomIds: [], adminBlocked: false, adminBlockMessage: "" };
-            return <Fragment key={user.id}>
-              <tr className={panel?.id === user.id ? "is-selected" : ""}>
-                <td>{user.name}</td>
-                <td>{user.address}</td>
-                <td>{user.email}</td>
-                <td>{user.phone}</td>
-                <td><div className="users-actions">
-                  <ActionIcon label="Add Tablet" onClick={() => setDeviceUser({ id: user.id, name: user.name })} disabled={deletingId === user.id}>
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="3" width="12" height="18" rx="2" /><path d="M10 18h4" /></svg>
-                  </ActionIcon>
-                  <ActionIcon label="View" onClick={() => setPanel({ id: user.id, mode: "view" })} disabled={deletingId === user.id}>
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></svg>
-                  </ActionIcon>
-                  <ActionIcon label="Edit" onClick={() => setPanel({ id: user.id, mode: "edit" })} disabled={deletingId === user.id}>
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" /></svg>
-                  </ActionIcon>
-                  <ActionIcon label={deletingId === user.id ? "Deleting..." : "Delete"} className="users-delete" onClick={() => removeUser(user)} disabled={Boolean(deletingId)}>
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16" /><path d="M9 7V5h6v2" /><path d="M7 7l1 13h8l1-13" /></svg>
-                  </ActionIcon>
-                </div></td>
-              </tr>
-              <tr className="users-disconnect-row">
-                <td colSpan={5}>
-                  <UserDisconnect roomIds={link.roomIds} blocked={link.adminBlocked} />
-                </td>
-              </tr>
-            </Fragment>;
-          })}</tbody>
-        </table></div>}
-    </section>
-    {selected && <section className="users-panel">
-      <UserDetails key={`${selected.id}-${panel.mode}`} user={selected} mode={panel.mode} onClose={() => setPanel(null)} />
-    </section>}
+    {selected ? <section className="users-panel">
+      <UserDetails
+        key={`${selected.id}-${panel.mode}`}
+        user={selected}
+        mode={panel.mode}
+        link={selectedLink}
+        deleting={deletingId === selected.id}
+        onBack={() => setPanel(null)}
+        onEdit={() => setPanel({ id: selected.id, mode: "edit" })}
+        onView={() => setPanel({ id: selected.id, mode: "view" })}
+        onDelete={() => removeUser(selected)}
+      />
+    </section> : <>
+      <div className="users-page-head">
+        <button type="button" className="users-add" onClick={openAdd}>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Add User
+        </button>
+      </div>
+      <section className="users-panel">
+        {loading ? <p>Loading users...</p> : users.length === 0 ? <p>No users yet. Use Add User to add one.</p> :
+          <ul className="users-directory">{users.map((user) => <li key={user.id}>
+            <button type="button" className="users-name" onClick={() => setPanel({ id: user.id, mode: "view" })}>
+              {user.name}
+            </button>
+            <div className="users-actions">
+              <ActionIcon label="Add Tablet" onClick={() => setDeviceUser({ id: user.id, name: user.name })} disabled={deletingId === user.id}>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="3" width="12" height="18" rx="2" /><path d="M10 18h4" /></svg>
+              </ActionIcon>
+            </div>
+          </li>)}</ul>}
+      </section>
+    </>}
     {deviceUser && <AddDeviceModal user={deviceUser} onClose={closeDevice} />}
     {adding && <div className="users-modal" onClick={() => { if (!saving) setAdding(false); }}>
       <div className="users-modal-card" role="dialog" aria-modal="true" aria-labelledby="add-user-title"
@@ -184,7 +187,7 @@ function ActionIcon({ label, className = "", disabled, onClick, children }) {
   </button>;
 }
 
-function UserDisconnect({ roomIds, blocked }) {
+function UserDisconnect({ userId, roomIds, blocked }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -199,6 +202,12 @@ function UserDisconnect({ roomIds, blocked }) {
         adminBlocked: nextBlocked,
         adminBlockMessage: warning,
       })));
+      await addDoc(historyCollection(userId), {
+        userId,
+        action: nextBlocked ? "disconnect" : "connect",
+        reason: nextBlocked ? warning : "",
+        ...connectionStamp(),
+      });
       setText("");
     } catch (err) {
       alert("Failed to update the tablets.");
@@ -300,7 +309,7 @@ function UserFields({ values, disabled, autoFocus = false, onChange }) {
   </label>);
 }
 
-function UserDetails({ user, mode, onClose }) {
+function UserDetails({ user, mode, link, deleting, onBack, onEdit, onView, onDelete }) {
   const [form, setForm] = useState({
     name: user.name || "",
     address: user.address || "",
@@ -320,16 +329,20 @@ function UserDetails({ user, mode, onClose }) {
     setSaving(true); setError("");
     try {
       await updateDoc(doc(db, "users", user.id), values);
-      onClose();
+      onView();
     } catch (err) { setError(describeError(err)); }
     finally { setSaving(false); }
   }
 
   return <>
     <div className="users-detail-head">
+      <button type="button" className="users-back" onClick={onBack} disabled={saving || deleting}>Back</button>
       <h2>{mode === "edit" ? `Edit ${user.name}` : user.name}</h2>
       <div className="users-actions">
-        <button type="button" className="users-cancel" onClick={onClose} disabled={saving}>Close</button>
+        {mode === "view" && <button type="button" onClick={onEdit} disabled={deleting}>Edit</button>}
+        <button type="button" className="users-delete" onClick={onDelete} disabled={saving || deleting}>
+          {deleting ? "Deleting..." : "Delete"}
+        </button>
       </div>
     </div>
     {error && <p role="alert" className="users-error">{error}</p>}
@@ -337,7 +350,7 @@ function UserDetails({ user, mode, onClose }) {
       <UserFields values={form} disabled={saving} autoFocus onChange={setForm} />
       <div className="users-actions">
         <button type="submit" disabled={saving}>{saving ? "Saving..." : "Save"}</button>
-        <button type="button" className="users-cancel" onClick={onClose} disabled={saving}>Cancel</button>
+        <button type="button" className="users-cancel" onClick={onView} disabled={saving}>Cancel</button>
       </div>
     </form> : <dl className="users-details">
       <dt>Address</dt><dd>{user.address}</dd>
@@ -345,7 +358,38 @@ function UserDetails({ user, mode, onClose }) {
       <dt>Phone</dt><dd>{user.phone}</dd>
     </dl>}
     <UserTablets userId={user.id} canManage={mode === "edit"} />
+    <UserDisconnect userId={user.id} roomIds={link.roomIds} blocked={link.adminBlocked} />
+    <ConnectionHistory userId={user.id} />
   </>;
+}
+
+function ConnectionHistory({ userId }) {
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => onSnapshot(historyCollection(userId), (snapshot) => {
+    const list = snapshot.docs.map((item) => ({ ...item.data(), id: item.id }));
+    list.sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(b.time).localeCompare(String(a.time)));
+    setRows(list);
+    setLoading(false);
+  }, () => setLoading(false)), [userId]);
+
+  return <div className="users-history">
+    <button type="button" className="users-history-toggle" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
+      Connection history ({rows.length})
+    </button>
+    {open && (loading ? <p>Loading history...</p> : rows.length === 0 ? <p>No connection history yet.</p> :
+      <div className="users-table-wrap"><table className="users-table">
+        <thead><tr><th>Date</th><th>Time</th><th>Action</th><th>Reason</th></tr></thead>
+        <tbody>{rows.map((row) => <tr key={row.id}>
+          <td>{row.date}</td>
+          <td>{row.time}</td>
+          <td>{row.action === "disconnect" ? "Disconnect" : "Connect"}</td>
+          <td>{row.reason || "—"}</td>
+        </tr>)}</tbody>
+      </table></div>)}
+  </div>;
 }
 
 function UserTablets({ userId, canManage }) {

@@ -14,13 +14,15 @@
 .users-modal-card { width: min(440px, 100%); max-height: calc(100vh - 48px); overflow: auto; background: white; border-radius: 16px; padding: 24px; }
 .users-modal-card h2 { font-size: 20px; margin-bottom: 16px; }
 .users-note { color: #64748b; font-size: 14px; }
-.users-directory tbody tr { cursor: pointer; }
-.users-directory tbody tr.is-selected { background: #eff6ff; }
-.users-directory tbody tr:hover { background: #f8fafc; }
-.users-directory tbody tr.is-selected:hover { background: #eff6ff; }
+.users-directory { list-style: none; display: grid; }
+.users-directory li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid #e2e8f0; }
+.users-name { border: 0; background: none; padding: 8px 0; color: #1d4ed8; font: inherit; font-weight: 600; cursor: pointer; text-align: left; }
+.users-name:hover { text-decoration: underline; }
+.users-back { border: 0; background: none; padding: 0; color: #2563eb; font: inherit; font-weight: 600; cursor: pointer; }
+.users-back:disabled { opacity: .6; cursor: wait; }
 .users-note { margin-bottom: 16px; }
-.users-detail-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
-.users-detail-head h2 { margin-bottom: 0; }
+.users-detail-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; }
+.users-detail-head h2 { flex: 1; margin-bottom: 0; }
 .users-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .users-actions button { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 0; border-radius: 8px; background: #2563eb; color: white; cursor: pointer; }
 .users-actions .users-icon { position: relative; width: 36px; height: 36px; padding: 0; justify-content: center; }
@@ -34,6 +36,10 @@
 .users-actions .users-delete { background: #b91c1c; }
 .users-actions .users-cancel { background: #64748b; }
 .users-edit-form { margin-bottom: 28px; }
+.users-history { margin-top: 28px; }
+.users-history-toggle { border: 0; background: none; padding: 0; color: #172033; font: inherit; font-size: 20px; font-weight: 700; cursor: pointer; }
+.users-history-toggle:hover { color: #2563eb; }
+.users-history .users-table-wrap, .users-history > p { margin-top: 16px; }
 .users-details { display: grid; grid-template-columns: 75px minmax(0, 1fr); gap: 10px; margin-bottom: 28px; overflow-wrap: anywhere; }
 .users-details dt { color: #64748b; }
 .users-error { color: #b91c1c; background: #fef2f2; padding: 12px; border-radius: 8px; margin: 12px 0; }
